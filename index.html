@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>わんこ図鑑 | あなたにぴったりの犬種を見つけよう</title>
+    <!-- Tailwind CSSの読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Noto Sans JP & Zen Maru Gothic) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons (アイコン用) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                        maru: ['"Zen Maru Gothic"', 'sans-serif'],
+                    },
+                    colors: {
+                        cream: '#FDFBF7',
+                        warmBeige: '#F5EFE6',
+                        terracotta: '#E07A5F',
+                        terracottaDark: '#C86348',
+                        sage: '#81B29A',
+                        navy: '#3D405B',
+                        mustard: '#F2CC8F',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* カスタムスクロールバーとアニメーション */
+        body {
+            background-color: #FDFBF7;
+            color: #3D405B;
+        }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 14px 28px rgba(61, 64, 91, 0.1), 0 10px 10px rgba(61, 64, 91, 0.04);
+        }
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+            transition: opacity 0.25s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+        }
+        /* カスタムアニメーション */
+        @keyframes pulseHeart {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .heart-pop {
+            animation: pulseHeart 0.35s ease;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col selection:bg-terracotta selection:text-white">
+
+    <!-- ヘッダーナビゲーション -->
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-stone-200/80 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+            <!-- ロゴ -->
+            <a href="#" onclick="resetAllFilters(); return false;" class="flex items-center gap-2.5 group">
+                <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-terracotta text-white flex items-center justify-center shadow-md group-hover:rotate-6 transition-transform">
+                    <i data-lucide="paw-print" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="font-maru font-black text-xl sm:text-2xl tracking-tight text-navy block leading-none">わんこ図鑑</span>
+                    <span class="text-[11px] text-stone-500 font-medium tracking-wider">DOG BREED ENCYCLOPEDIA</span>
+                </div>
+            </a>
+
+            <!-- ナビゲーションアクション -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <button onclick="openQuizModal()" class="flex items-center gap-1.5 bg-sage/15 hover:bg-sage/25 text-emerald-900 font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-full transition-colors border border-sage/30">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-emerald-700"></i>
+                    <span>おすすめ犬種診断</span>
+                </button>
+
+                <button id="favFilterBtn" onclick="toggleFavoriteFilter()" class="relative flex items-center gap-1.5 bg-warmBeige hover:bg-stone-200/80 text-navy font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-full transition-all border border-stone-200">
+                    <i data-lucide="heart" id="headerHeartIcon" class="w-4 h-4 text-terracotta transition-colors"></i>
+                    <span class="hidden sm:inline">お気に入り</span>
+                    <span id="favCountBadge" class="bg-terracotta text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[1.5rem] text-center">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ヒーローセクション -->
+    <section class="relative bg-gradient-to-b from-warmBeige via-cream to-cream pt-10 pb-8 sm:pt-14 sm:pb-12 overflow-hidden">
+        <!-- 背景の装飾肉球 -->
+        <div class="absolute top-6 right-10 text-terracotta/10 pointer-events-none hidden md:block">
+            <i data-lucide="paw-print" class="w-36 h-36 rotate-12"></i>
+        </div>
+        <div class="absolute bottom-2 left-8 text-sage/15 pointer-events-none hidden md:block">
+            <i data-lucide="bone" class="w-28 h-28 -rotate-12"></i>
+        </div>
+
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10">
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white text-terracotta font-bold text-xs sm:text-sm shadow-sm border border-stone-100 mb-4">
+                <i data-lucide="heart-handshake" class="w-4 h-4"></i>
+                性格・サイズ・飼いやすさから探せる
+            </span>
+            <h1 class="font-maru font-black text-3xl sm:text-4xl md:text-5xl text-navy leading-tight mb-4">
+                あなたと最高の毎日を過ごす<br class="sm:hidden">パートナーを見つけよう
+            </h1>
+            <p class="text-stone-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed mb-8">
+                人気の小型犬から頼もしい大型犬まで、それぞれの犬種が持つ魅力的な性格や特徴、お手入れのポイントを分かりやすくご紹介します。
+            </p>
+
+            <!-- 検索バー -->
+            <div class="max-w-xl mx-auto relative">
+                <div class="relative flex items-center">
+                    <i data-lucide="search" class="w-5 h-5 text-stone-400 absolute left-4 pointer-events-none"></i>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="犬種名や特徴で検索（例：柴犬、賢い、甘えん坊、日本...）" 
+                        class="w-full pl-12 pr-12 py-3.5 sm:py-4 bg-white rounded-2xl border-2 border-stone-200/90 focus:border-terracotta focus:outline-none shadow-md text-sm sm:text-base text-navy placeholder:text-stone-400 transition-colors"
+                    >
+                    <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3.5 p-1.5 text-stone-400 hover:text-navy rounded-full hover:bg-stone-100 transition-colors" title="検索をクリア">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- メインコンテンツエリア -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        
+        <!-- 診断結果バナー（診断実行時のみ表示） -->
+        <div id="quizResultBanner" class="hidden mb-6 bg-gradient-to-r from-sage/20 via-emerald-50 to-warmBeige border-2 border-sage rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-start sm:items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-sage text-white flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                    <i data-lucide="award" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-white px-2 py-0.5 rounded-md">診断結果</span>
+                        <h2 id="quizResultTitle" class="font-maru font-bold text-base sm:text-lg text-navy">あなたにおすすめの犬種を表示中！</h2>
+                    </div>
+                    <p id="quizResultDesc" class="text-xs sm:text-sm text-stone-600 mt-1">ライフスタイルにぴったりのパートナー候補です。</p>
+                </div>
+            </div>
+            <button onclick="clearQuizFilter()" class="text-xs sm:text-sm font-bold text-emerald-900 bg-white hover:bg-emerald-50 px-4 py-2 rounded-xl border border-sage/40 transition-colors shrink-0 self-end sm:self-center">
+                診断フィルターを解除
+            </button>
+        </div>
+
+        <!-- フィルター＆ソートコントロールバー -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-stone-200/80 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                
+                <!-- サイズカテゴリーボタン -->
+                <div class="flex flex-wrap items-center gap-2" role="group" aria-label="サイズフィルター">
+                    <button data-size="all" class="filter-btn active px-4 py-2 rounded-xl text-sm font-bold transition-all bg-navy text-white shadow-sm">
+                        すべて
+                    </button>
+                    <button data-size="小型犬" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition-all bg-warmBeige text-navy hover:bg-stone-200">
+                        小型犬
+                    </button>
+                    <button data-size="中型犬" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition-all bg-warmBeige text-navy hover:bg-stone-200">
+                        中型犬
+                    </button>
+                    <button data-size="大型犬" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition-all bg-warmBeige text-navy hover:bg-stone-200">
+                        大型犬
+                    </button>
+                </div>
+
+                <!-- 並び替え＆件数表示 -->
+                <div class="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-stone-100">
+                    <span class="text-xs sm:text-sm text-stone-500 font-medium">
+                        表示中: <strong id="resultCount" class="text-navy font-bold text-base">0</strong> 犬種
+                    </span>
+
+                    <div class="flex items-center gap-2">
+                        <label for="sortSelect" class="text-xs sm:text-sm text-stone-500 font-medium hidden sm:inline">並び替え:</label>
+                        <div class="relative">
+                            <select id="sortSelect" class="appearance-none bg-warmBeige hover:bg-stone-200/70 text-navy font-bold text-xs sm:text-sm pl-3.5 pr-9 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-terracotta cursor-pointer transition-colors">
+                                <option value="default">標準（人気順）</option>
+                                <option value="ease">飼いやすさ順</option>
+                                <option value="exercise">運動量が多い順</option>
+                                <option value="affection">甘えん坊度順</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-navy absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 犬種カードグリッド -->
+        <div id="breedGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
+            <!-- JavaScriptによって動的にカードが挿入されます -->
+        </div>
+
+        <!-- 検索結果ゼロ時のエンプティステート -->
+        <div id="emptyState" class="hidden text-center py-16 px-4 bg-white rounded-3xl border border-stone-200/80 shadow-sm">
+            <div class="w-16 h-16 bg-warmBeige text-terracotta rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="search-x" class="w-8 h-8"></i>
+            </div>
+            <h3 class="font-maru font-bold text-xl text-navy mb-2">条件に一致する犬種が見つかりませんでした</h3>
+            <p class="text-stone-500 text-sm mb-6 max-w-md mx-auto">
+                検索キーワードを変えるか、カテゴリーやお気に入りの絞り込みを解除して再度お試しください。
+            </p>
+            <button onclick="resetAllFilters()" class="inline-flex items-center gap-2 bg-terracotta hover:bg-terracottaDark text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md transition-colors">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                すべての条件をリセット
+            </button>
+        </div>
+
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-navy text-stone-300 py-10 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-terracotta text-white flex items-center justify-center">
+                    <i data-lucide="paw-print" class="w-5 h-5"></i>
+                </div>
+                <span class="font-maru font-bold text-lg text-white">わんこ図鑑</span>
+            </div>
+            <p class="text-xs text-stone-400 text-center sm:text-right">
+                ※各犬種の性格や運動量は一般的な傾向であり、個体差があります。<br class="sm:hidden">お迎えの際は専門家のアドバイスも参考にしてください。
+            </p>
+        </div>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- 犬種詳細モーダル -->
+    <!-- ========================================== -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="modalBreedName">
+        <!-- 背景オーバーレイ -->
+        <div id="detailModalBackdrop" onclick="closeDetailModal()" class="modal-backdrop fixed inset-0 bg-navy/60 opacity-0"></div>
+        
+        <!-- モーダル本体 -->
+        <div id="detailModalContent" class="modal-content relative bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl z-10 opacity-0 scale-95">
+            <!-- 閉じるボタン -->
+            <button onclick="closeDetailModal()" class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-navy shadow-md flex items-center justify-center transition-transform hover:scale-105" aria-label="閉じる">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <!-- モーダルヘッダービジュアル -->
+            <div id="modalHeaderVisual" class="relative h-56 sm:h-64 flex items-center justify-center overflow-hidden">
+                <!-- JSでイラストと背景色を挿入 -->
+            </div>
+
+            <!-- モーダル本文 -->
+            <div class="p-6 sm:p-8">
+                <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span id="modalSizeBadge" class="px-3 py-1 rounded-full text-xs font-bold"></span>
+                            <span id="modalOrigin" class="text-xs font-medium text-stone-500 flex items-center gap-1">
+                                <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                                <span></span>
+                            </span>
+                        </div>
+                        <h2 id="modalBreedName" class="font-maru font-black text-2xl sm:text-3xl text-navy"></h2>
+                        <p id="modalBreedEn" class="text-xs sm:text-sm font-semibold text-stone-400 tracking-wider uppercase"></p>
+                    </div>
+
+                    <!-- モーダル内お気に入りボタン -->
+                    <button id="modalFavBtn" onclick="toggleCurrentModalFavorite()" class="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm border-2 transition-all">
+                        <i data-lucide="heart" class="w-5 h-5"></i>
+                        <span id="modalFavText">お気に入りに追加</span>
+                    </button>
+                </div>
+
+                <!-- キャッチコピー -->
+                <p id="modalCatchphrase" class="font-maru font-bold text-terracotta text-base sm:text-lg mb-4 bg-warmBeige/70 px-4 py-2.5 rounded-xl border-l-4 border-terracotta"></p>
+
+                <!-- ステータスバー -->
+                <div class="grid grid-cols-3 gap-3 sm:gap-4 bg-cream p-4 rounded-2xl border border-stone-200/70 mb-6">
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-navy mb-1">
+                            <span>飼いやすさ</span>
+                            <span id="modalStatEaseText" class="text-terracotta"></span>
+                        </div>
+                        <div class="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
+                            <div id="modalStatEaseBar" class="h-full bg-terracotta rounded-full transition-all duration-500"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-navy mb-1">
+                            <span>運動量</span>
+                            <span id="modalStatExerciseText" class="text-sage"></span>
+                        </div>
+                        <div class="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
+                            <div id="modalStatExerciseBar" class="h-full bg-sage rounded-full transition-all duration-500"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-navy mb-1">
+                            <span>甘えん坊度</span>
+                            <span id="modalStatAffectionText" class="text-amber-500"></span>
+                        </div>
+                        <div class="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
+                            <div id="modalStatAffectionBar" class="h-full bg-amber-400 rounded-full transition-all duration-500"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 詳細セクション群 -->
+                <div class="space-y-5 text-sm sm:text-base text-stone-700 leading-relaxed">
+                    <div>
+                        <h3 class="font-maru font-bold text-navy text-base sm:text-lg flex items-center gap-2 mb-1.5">
+                            <i data-lucide="smile" class="w-5 h-5 text-terracotta"></i>
+                            性格と特徴
+                        </h3>
+                        <p id="modalPersonality"></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div class="bg-warmBeige/60 p-4 rounded-2xl border border-stone-200/60">
+                            <h4 class="font-maru font-bold text-navy text-sm sm:text-base flex items-center gap-1.5 mb-2">
+                                <i data-lucide="scissors" class="w-4 h-4 text-sage"></i>
+                                お手入れ・飼育のポイント
+                            </h4>
+                            <p id="modalCare" class="text-xs sm:text-sm text-stone-600 leading-relaxed"></p>
+                        </div>
+
+                        <div class="bg-warmBeige/60 p-4 rounded-2xl border border-stone-200/60">
+                            <h4 class="font-maru font-bold text-navy text-sm sm:text-base flex items-center gap-1.5 mb-2">
+                                <i data-lucide="user-check" class="w-4 h-4 text-terracotta"></i>
+                                こんな飼い主さんにおすすめ
+                            </h4>
+                            <p id="modalOwner" class="text-xs sm:text-sm text-stone-600 leading-relaxed"></p>
+                        </div>
+                    </div>
+
+                    <!-- 基本データタグ -->
+                    <div class="flex flex-wrap gap-2 pt-2 border-t border-stone-100">
+                        <span id="modalWeight" class="text-xs bg-stone-100 text-stone-600 font-medium px-3 py-1.5 rounded-lg"></span>
+                        <span id="modalLifespan" class="text-xs bg-stone-100 text-stone-600 font-medium px-3 py-1.5 rounded-lg"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- おすすめ犬種診断モーダル -->
+    <!-- ========================================== -->
+    <div id="quizModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+        <div id="quizModalBackdrop" onclick="closeQuizModal()" class="modal-backdrop fixed inset-0 bg-navy/60 opacity-0"></div>
+        
+        <div id="quizModalContent" class="modal-content relative bg-white w-full max-w-lg rounded-3xl shadow-2xl z-10 overflow-hidden opacity-0 scale-95">
+            <div class="bg-gradient-to-r from-sage to-emerald-600 p-6 text-white relative">
+                <button onclick="closeQuizModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <div class="flex items-center gap-2 text-emerald-100 text-xs font-bold mb-1">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    30秒でわかる！ライフスタイル診断
+                </div>
+                <h2 class="font-maru font-black text-2xl">おすすめ犬種診断</h2>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <!-- 質問1 -->
+                <div>
+                    <label class="block font-maru font-bold text-navy text-base mb-2.5">
+                        Q1. 現在の住環境（お部屋の広さ）は？
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="q_space" value="compact" class="peer sr-only" checked>
+                            <div class="p-3.5 rounded-2xl border-2 border-stone-200 peer-checked:border-sage peer-checked:bg-sage/10 text-center transition-all">
+                                <span class="block font-bold text-sm text-navy">マンション・アパート</span>
+                                <span class="text-xs text-stone-500">室内中心でコンパクト</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="q_space" value="spacious" class="peer sr-only">
+                            <div class="p-3.5 rounded-2xl border-2 border-stone-200 peer-checked:border-sage peer-checked:bg-sage/10 text-center transition-all">
+                                <span class="block font-bold text-sm text-navy">一戸建て・広いお部屋</span>
+                                <span class="text-xs text-stone-500">スペースにゆとりあり</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 質問2 -->
+                <div>
+                    <label class="block font-maru font-bold text-navy text-base mb-2.5">
+                        Q2. 休日の過ごし方・お散歩の時間は？
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="q_activity" value="relaxed" class="peer sr-only" checked>
+                            <div class="p-3.5 rounded-2xl border-2 border-stone-200 peer-checked:border-sage peer-checked:bg-sage/10 text-center transition-all">
+                                <span class="block font-bold text-sm text-navy">おうちでまったり派</span>
+                                <span class="text-xs text-stone-500">1日30分程度のお散歩</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="q_activity" value="active" class="peer sr-only">
+                            <div class="p-3.5 rounded-2xl border-2 border-stone-200 peer-checked:border-sage peer-checked:bg-sage/10 text-center transition-all">
+                                <span class="block font-bold text-sm text-navy">アウトドア・運動大好き</span>
+                                <span class="text-xs text-stone-500">毎日たっぷり運動したい</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 質問3 -->
+                <div>
+                    <label class="block font-maru font-bold text-navy text-base mb-2.5">
+                        Q3. ワンちゃんとの理想の距離感は？
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="q_distance" value="cuddly" class="peer sr-only" checked>
+                            <div class="p-3.5 rounded-2xl border-2 border-stone-200 peer-checked:border-sage peer-checked:bg-sage/10 text-center transition-all">
+                                <span class="block font-bold text-sm text-navy">いつもベッタリ甘えたい</span>
+                                <span class="text-xs text-stone-500">膝の上や隣にいてほしい</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="q_distance" value="partner" class="peer sr-only">
+                            <div class="p-3.5 rounded-2xl border-2 border-stone-200 peer-checked:border-sage peer-checked:bg-sage/10 text-center transition-all">
+                                <span class="block font-bold text-sm text-navy">程よい距離感・相棒感</span>
+                                <span class="text-xs text-stone-500">自立心や賢さも重視</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="runBreedQuiz()" class="w-full py-3.5 bg-terracotta hover:bg-terracottaDark text-white font-maru font-bold text-base rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                    診断結果を見る
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript ロジック -->
+    <script>
+        /**
+         * カスタムSVGイラスト生成ヘルパー
+         * 各犬種の特徴（耳の形、毛色、顔立ち）を温かみのあるベクターイラストで描画します。
+         */
+        function getDogIllustrationSVG(type) {
+            const svgs = {
+                shiba: `
+                    <svg viewBox="0 0 200 160" class="w-40 h-32 drop-shadow-md">
+                        <!-- 耳 -->
+                        <polygon points="52,55 42,18 82,42" fill="#D9822B"/>
+                        <polygon points="56,50 48,26 75,42" fill="#FCE8D5"/>
+                        <polygon points="148,55 158,18 118,42" fill="#D9822B"/>
+                        <polygon points="144,50 152,26 125,42" fill="#FCE8D5"/>
+                        <!-- 顔の輪郭 -->
+                        <ellipse cx="100" cy="92" rx="56" ry="48" fill="#E6953E"/>
+                        <!-- 頬の白毛（裏白） -->
+                        <path d="M44,92 Q65,85 100,98 Q135,85 156,92 Q152,140 100,140 Q48,140 44,92 Z" fill="#FFFDF9"/>
+                        <!-- まろ眉 -->
+                        <ellipse cx="78" cy="70" rx="6" ry="4" fill="#FFFDF9"/>
+                        <ellipse cx="122" cy="70" rx="6" ry="4" fill="#FFFDF9"/>
+                        <!-- 目 -->
+                        <circle cx="78" cy="82" r="5.5" fill="#2B2623"/>
+                        <circle cx="76" cy="80" r="1.8" fill="#FFF"/>
+                        <circle cx="122" cy="82" r="5.5" fill="#2B2623"/>
+                        <circle cx="120" cy="80" r="1.8" fill="#FFF"/>
+                        <!-- 鼻と口 -->
+                        <ellipse cx="100" cy="100" rx="9" ry="6.5" fill="#2B2623"/>
+                        <path d="M100,106 L100,115 M90,113 Q100,121 110,113" stroke="#2B2623" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <!-- 柴犬バンダナ -->
+                        <path d="M64,132 Q100,146 136,132 L126,152 Q100,160 74,152 Z" fill="#2E6F40"/>
+                    </svg>`,
+                poodle: `
+                    <svg viewBox="0 0 200 160" class="w-40 h-32 drop-shadow-md">
+                        <!-- モコモコの耳 -->
+                        <circle cx="48" cy="75" r="22" fill="#C86D3B"/>
+                        <circle cx="44" cy="98" r="20" fill="#C86D3B"/>
+                        <circle cx="152" cy="75" r="22" fill="#C86D3B"/>
+                        <circle cx="156" cy="98" r="20" fill="#C86D3B"/>
+                        <!-- 頭のモコモコ -->
+                        <circle cx="100" cy="44" r="26" fill="#D97B43"/>
+                        <circle cx="76" cy="52" r="22" fill="#D97B43"/>
+                        <circle cx="124" cy="52" r="22" fill="#D97B43"/>
+                        <!-- 顔本体 -->
+                        <ellipse cx="100" cy="92" rx="44" ry="42" fill="#E38A54"/>
+                        <!-- マズル -->
+                        <ellipse cx="100" cy="104" rx="24" ry="19" fill="#F2A472"/>
+                        <!-- 目 -->
+                        <circle cx="80" cy="84" r="6.5" fill="#231F20"/>
+                        <circle cx="78" cy="82" r="2.2" fill="#FFF"/>
+                        <circle cx="120" cy="84" r="6.5" fill="#231F20"/>
+                        <circle cx="118" cy="82" r="2.2" fill="#FFF"/>
+                        <!-- 鼻と口 -->
+                        <ellipse cx="100" cy="98" rx="8" ry="6" fill="#231F20"/>
+                        <path d="M92,110 Q100,117 108,110" stroke="#231F20" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+                        <!-- 赤いリボン -->
+                        <polygon points="100,26 86,18 86,34" fill="#E05A47"/>
+                        <polygon points="100,26 114,18 114,34" fill="#E05A47"/>
+                        <circle cx="100" cy="26" r="4" fill="#B83B2A"/>
+                    </svg>`,
+                golden: `
+                    <svg viewBox="0 0 200 160" class="w-40 h-32 drop-shadow-md">
+                        <!-- 垂れ耳 -->
+                        <path d="M52,58 Q28,75 36,120 Q48,132 62,112 Z" fill="#D49B42"/>
+                        <path d="M148,58 Q172,75 164,120 Q152,132 138,112 Z" fill="#D49B42"/>
+                        <!-- 顔 -->
+                        <ellipse cx="100" cy="88" rx="52" ry="48" fill="#EBC06D"/>
+                        <!-- マズル -->
+                        <ellipse cx="100" cy="106" rx="28" ry="22" fill="#F7D999"/>
+                        <!-- 優しい目 -->
+                        <circle cx="78" cy="80" r="5.5" fill="#36281E"/>
+                        <circle cx="76" cy="78" r="1.8" fill="#FFF"/>
+                        <circle cx="122" cy="80" r="5.5" fill="#36281E"/>
+                        <circle cx="120" cy="78" r="1.8" fill="#FFF"/>
+                        <!-- 鼻と笑顔 -->
+                        <ellipse cx="100" cy="98" rx="10" ry="7" fill="#36281E"/>
+                        <path d="M86,112 Q100,124 114,112" stroke="#36281E" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <path d="M94,117 Q100,129 106,117" fill="#F28B82"/>
+                    </svg>`,
+                chihuahua: `
+                    <svg viewBox="0 0 200 160" class="w-40 h-32 drop-shadow-md">
+                        <!-- 大きな立ち耳 -->
+                        <polygon points="58,68 24,20 82,48" fill="#E5C39C"/>
+                        <polygon points="56,62 34,30 74,50" fill="#F7B2B7"/>
+                        <polygon points="142,68 176,20 118,48" fill="#E5C39C"/>
+                        <polygon points="144,62 166,30 126,50" fill="#F7B2B7"/>
+                        <!-- アップルヘッド -->
+                        <circle cx="100" cy="92" r="44" fill="#F2D7B6"/>
+                        <!-- 額の模様 -->
+                        <path d="M92,52 L100,72 L108,52 Z" fill="#FFF9F0"/>
+                        <!-- 大きなうるうる目 -->
+                        <circle cx="78" cy="90" r="8.5" fill="#231916"/>
+                        <circle cx="75" cy="87" r="3" fill="#FFF"/>
+                        <circle cx="122" cy="90" r="8.5" fill="#231916"/>
+                        <circle cx="119" cy="87" r="3" fill="#FFF"/>
+                        <!-- 小さな鼻と口 -->
+                        <ellipse cx="100" cy="105" rx="6.5" ry="4.5" fill="#3D2B24"/>
+                        <path d="M93,114 Q100,119 107,114" stroke="#3D2B24" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    </svg>`,
+                frenchie: `
+                    <svg viewBox="0 0 200 160" class="w-40 h-32 drop-shadow-md">
+                        <!-- コウモリ耳 -->
+                        <path d="M50,65 Q32,18 68,24 Q84,32 82,55 Z" fill="#F4EFEA" stroke="#3D405B" stroke-width="2"/>
+                        <path d="M56,58 Q44,28 66,32 Q76,38 74,52 Z" fill="#F5B7B1"/>
+                        <path d="M150,65 Q168,18 132,24 Q116,32 118,55 Z" fill="#3D405B"/>
+                        <!-- 四角い顔 -->
+                        <rect x="52" y="52" width="96" height="84" rx="36" fill="#F4EFEA"/>
+                        <!-- 片目のブチ模様 -->
+                        <circle cx="124" cy="78" r="24" fill="#3D405B"/>
+                        <!-- 目 -->
+                        <circle cx="76" cy="82" r="6.5" fill="#222"/>
+                        <circle cx="74" cy="80" r="2" fill="#FFF"/>
+                        <circle cx="124" cy="82" r="6.5" fill="#222"/>
+                        <circle cx="122" cy="80" r="2" fill="#FFF"/>
+                        <!-- ペチャ鼻とシワ -->
+                        <path d="M88,92 Q100,87 112,92" stroke="#BDB5AE" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        <ellipse cx="100" cy="100" rx="11" ry="6.5" fill="#2B2B2B"/>
+                        <path d="M78,116 Q100,108 122,116" stroke="#2B2B2B" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    </svg>`,
+                collie: `
+                    <svg viewBox="0 0 200 160" class="w-40 h-32 drop-shadow-md">
+                        <!-- 半立ち耳 -->
+                        <polygon points="56,60 36,26 80,46" fill="#2B2D42"/>
+                        <polygon points="144,60 164,26 120,46" fill="#2B2D42"/>
+                        <!-- 顔ベース（黒） -->
+                        <ellipse cx="100" cy="90" rx="50" ry="46" fill="#2B2D42"/>
+                        <!-- ブレーズ（鼻筋の白）とマズル -->
+                        <path d="M93,46 L107,46 L114,95 L136,112 Q100,142 64,112 L86,95 Z" fill="#FFFFFF"/>
+                        <!-- 賢そうな目 -->
+                        <circle cx="78" cy="82" r="5.5" fill="#5C3A21"/>
+                        <circle cx="76" cy="80" r="1.8" fill="#FFF"/>
+                        <circle cx="122" cy="82" r="5.5" fill="#5C3A21"/>
+                        <circle cx="120" cy="80" r="1.8" fill="#FFF"/>
+                        <!-- 鼻と口 -->
+                        <ellipse cx="100" cy="102" rx="8.5" ry="6" fill="#1A1A1A"/>
+                        <path d="M88,114 Q100,122 112,114" stroke="#1A1A1A" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+                    </svg>`,
+                dachshund: `
+                    <svg viewBox="0 0 200 160" class="w-40 h-32 drop-shadow-md">
+                        <!-- 長い垂れ耳 -->
+                        <path d="M56,56 Q26,80 34,132 Q48,140 62,116 Z" fill="#4A2511"/>
+                        <path d="M144,56 Q174,80 166,132 Q152,140 138,116 Z" fill="#4A2511"/>
+                        <!-- 顔（ブラック＆タン） -->
+                        <ellipse cx="100" cy="88" rx="46" ry="46" fill="#3B1E0E"/>
+                        <!-- タン（茶色）の眉と口周り -->
+                        <ellipse cx="80" cy="70" rx="6" ry="4" fill="#C97A3A"/>
+                        <ellipse cx="120" cy="70" rx="6" ry="4" fill="#C97A3A"/>
+                        <ellipse cx="100" cy="110" rx="26" ry="22" fill="#C97A3A"/>
+                        <!-- 目 -->
+                        <circle cx="80" cy="82" r="5.5" fill="#1A0D06"/>
+                        <circle cx="78" cy="80" r="1.8" fill="#FFF"/>
+                        <circle cx="120" cy="82" r="5.5" fill="#1A0D06"/>
+                        <circle cx="118" cy="80" r="1.8" fill="#FFF"/>
+                        <!-- 鼻と口 -->
+                        <ellipse cx="100" cy="102" rx="8.5" ry="6" fill="#1A0D06"/>
+                        <path d="M90,114 Q100,121 110,114" stroke="#1A0D06" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    </svg>`,
+                pomeranian: `
+                    <svg viewBox="0 0 200 160" class="w-40 h-32 drop-shadow-md">
+                        <!-- フワフワの輪郭 -->
+                        <circle cx="100" cy="88" r="56" fill="#F6B959"/>
+                        <circle cx="62" cy="64" r="24" fill="#F6B959"/>
+                        <circle cx="138" cy="64" r="24" fill="#F6B959"/>
+                        <circle cx="58" cy="102" r="24" fill="#F6B959"/>
+                        <circle cx="142" cy="102" r="24" fill="#F6B959"/>
+                        <!-- 小さな三角耳 -->
+                        <polygon points="62,48 54,24 78,40" fill="#E09A34"/>
+                        <polygon points="138,48 146,24 122,40" fill="#E09A34"/>
+                        <!-- 顔中心 -->
+                        <circle cx="100" cy="90" r="40" fill="#F9CA78"/>
+                        <ellipse cx="100" cy="104" rx="20" ry="15" fill="#FFF6E5"/>
+                        <!-- 目 -->
+                        <circle cx="82" cy="86" r="5.5" fill="#222"/>
+                        <circle cx="80" cy="84" r="1.8" fill="#FFF"/>
+                        <circle cx="118" cy="86" r="5.5" fill="#222"/>
+                        <circle cx="116" cy="84" r="1.8" fill="#FFF"/>
+                        <!-- 鼻とニッコリ口 -->
+                        <ellipse cx="100" cy="98" rx="6.5" ry="4.5" fill="#222"/>
+                        <path d="M91,106 Q100,114 109,106" stroke="#222" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    </svg>`,
+                husky: `
+                    <svg viewBox="0 0 200 160" class="w-40 h-32 drop-shadow-md">
+                        <!-- ピンと立った耳 -->
+                        <polygon points="56,60 44,16 84,44" fill="#4A5568"/>
+                        <polygon points="60,54 50,25 78,44" fill="#CBD5E0"/>
+                        <polygon points="144,60 156,16 116,44" fill="#4A5568"/>
+                        <polygon points="140,54 150,25 122,44" fill="#CBD5E0"/>
+                        <!-- 顔ベース（シルバーグレー） -->
+                        <ellipse cx="100" cy="90" rx="52" ry="48" fill="#4A5568"/>
+                        <!-- ハスキー特有の白い顔マスク -->
+                        <path d="M62,82 Q78,62 100,76 Q122,62 138,82 Q148,136 100,138 Q52,136 62,82 Z" fill="#F7FAFC"/>
+                        <!-- 額の模様 -->
+                        <path d="M94,54 L100,72 L106,54 Z" fill="#F7FAFC"/>
+                        <!-- クールな青い目 -->
+                        <circle cx="78" cy="84" r="6" fill="#3182CE"/>
+                        <circle cx="78" cy="84" r="2.5" fill="#1A202C"/>
+                        <circle cx="76" cy="82" r="1.5" fill="#FFF"/>
+                        <circle cx="122" cy="84" r="6" fill="#3182CE"/>
+                        <circle cx="122" cy="84" r="2.5" fill="#1A202C"/>
+                        <circle cx="120" cy="82" r="1.5" fill="#FFF"/>
+                        <!-- 鼻と口 -->
+                        <ellipse cx="100" cy="102" rx="9" ry="6.5" fill="#1A202C"/>
+                        <path d="M88,114 Q100,122 112,114" stroke="#1A202C" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+                    </svg>`
+            };
+            return svgs[type] || svgs.shiba;
+        }
+
+        /**
+         * 犬種データベース（全9種）
+         */
+        const DOG_BREEDS = [
+            {
+                id: 'shiba',
+                name: '柴犬',
+                enName: 'Shiba Inu',
+                size: '中型犬',
+                origin: '日本',
+                svgType: 'shiba',
+                bgColor: 'bg-amber-50',
+                catchphrase: '凛々しい姿と忠誠心！日本が誇る最高の相棒',
+                shortDesc: 'ピンと立った三角耳とクルンとした巻き尾が特徴。飼い主には深い愛情と忠誠心を見せる日本犬の代表格です。',
+                personality: '独立心が強く、賢くて勇敢な性格です。初対面の人や犬には少し警戒心を見せることもありますが、一度信頼した飼い主や家族にはとても忠実で、絶妙な距離感を保ちながら寄り添ってくれます。',
+                care: 'ダブルコートで春と秋の換毛期には大量に毛が抜けます。週に2〜3回のブラッシングと、換毛期は毎日のケアがおすすめです。散歩が大好きなので毎日朝晩30分ずつ歩きましょう。',
+                owner: 'メリハリのあるしつけができる方や、程よい距離感で信頼関係を築きたい方にぴったりです。',
+                stats: { ease: 4, exercise: 4, affection: 3 },
+                weight: '約7〜11kg',
+                lifespan: '12〜15歳',
+                tags: ['compact', 'spacious', 'active', 'partner', '忠実', '日本犬', '賢い']
+            },
+            {
+                id: 'poodle',
+                name: 'トイ・プードル',
+                enName: 'Toy Poodle',
+                size: '小型犬',
+                origin: 'フランス',
+                svgType: 'poodle',
+                bgColor: 'bg-orange-50',
+                catchphrase: 'ぬいぐるみのような愛らしさと抜群の知能！',
+                shortDesc: 'くるくるの被毛とつぶらな瞳が大人気。抜け毛が少なく、学習能力が非常に高いため初心者でも飼いやすい犬種です。',
+                personality: '明るく社交的で、人にも他の犬にもフレンドリーです。全犬種の中でもトップクラスの知能を持ち、飼い主の感情を読み取るのが得意。甘えん坊で遊ぶことが大好きです。',
+                care: '抜け毛は少ないですが、毛が伸び続けるため月1回程度のトリミングと、毛玉を防ぐための毎日のブラッシングが欠かせません。',
+                owner: '初めて犬を飼う方や、マンション住まいの方、一緒にトリックや遊びを楽しみたいご家族におすすめです。',
+                stats: { ease: 5, exercise: 3, affection: 5 },
+                weight: '約3〜4kg',
+                lifespan: '14〜17歳',
+                tags: ['compact', 'relaxed', 'cuddly', '抜け毛少ない', '賢い', '初心者向け']
+            },
+            {
+                id: 'golden',
+                name: 'ゴールデン・レトリバー',
+                enName: 'Golden Retriever',
+                size: '大型犬',
+                origin: 'イギリス',
+                svgType: 'golden',
+                bgColor: 'bg-yellow-50',
+                catchphrase: '笑顔と優しさあふれる、太陽のような大型犬',
+                shortDesc: '美しい黄金色の被毛と温和な性格が魅力。小さな子どもとも仲良くできる、家族思いで賢いパートナーです。',
+                personality: '非常に穏やかで優しく、攻撃性がほとんどありません。人が大好きで、家族の輪の中にいることに幸せを感じます。盲導犬やセラピードッグとしても活躍するほど忍耐強く賢い犬種です。',
+                care: '豊かな長毛を持つため、週3〜4回のブラッシングが必要です。また、泳ぐことや走ることが大好きなので、毎日1時間以上のしっかりとした運動時間を確保してあげましょう。',
+                owner: '広い住環境があり、アウトドアや毎日の長いお散歩を一緒に楽しめるアクティブなご家庭に最適です。',
+                stats: { ease: 4, exercise: 5, affection: 5 },
+                weight: '約25〜34kg',
+                lifespan: '10〜13歳',
+                tags: ['spacious', 'active', 'cuddly', '優しい', '家族向け', '大型犬']
+            },
+            {
+                id: 'chihuahua',
+                name: 'チワワ',
+                enName: 'Chihuahua',
+                size: '小型犬',
+                origin: 'メキシコ',
+                svgType: 'chihuahua',
+                bgColor: 'bg-rose-50',
+                catchphrase: '世界最小のボディに大きな愛情を秘めた甘えん坊',
+                shortDesc: '大きな瞳とピンと立った耳がチャームポイント。省スペースでも飼育しやすく、飼い主の膝の上が大好きな犬種です。',
+                personality: '飼い主に対して一途で深い愛情を注ぎます。小さな体に似合わず勇敢な一面もあり、知らない物音には敏感に反応することがあります。おうちの中で飼い主と過ごす時間が大好きです。',
+                care: '寒さに弱いため冬場は室温管理や洋服での防寒が大切です。運動量は室内での遊び＋1日15〜20分程度のお散歩で十分満足できます。',
+                owner: 'インドア派の方や、都市部のマンション住まいの方、いつもそばで甘えてほしい方にぴったりです。',
+                stats: { ease: 5, exercise: 2, affection: 5 },
+                weight: '約1.5〜3kg',
+                lifespan: '14〜18歳',
+                tags: ['compact', 'relaxed', 'cuddly', '超小型犬', '室内飼い', '甘えん坊']
+            },
+            {
+                id: 'frenchie',
+                name: 'フレンチ・ブルドッグ',
+                enName: 'French Bulldog',
+                size: '小型犬',
+                origin: 'フランス',
+                svgType: 'frenchie',
+                bgColor: 'bg-slate-100',
+                catchphrase: 'コミカルな表情と愛嬌たっぷりのムードメーカー',
+                shortDesc: 'コウモリのような大きな耳と愛らしい鼻ぺちゃ顔が特徴。吠えることが少なく、陽気で人懐っこい性格です。',
+                personality: '明るく陽気で、家族を笑わせてくれるようなコミカルな行動が魅力です。無駄吠えが少なく落ち着きがありますが、飼い主のそばにいたがる甘えん坊な一面も強く持っています。',
+                care: '短頭種のため暑さに非常に弱く、夏場のエアコン管理は必須です。顔のシワの間は汚れが溜まりやすいので、こまめに優しく拭いて清潔に保ちましょう。',
+                owner: 'おうちでゆったり過ごす時間が好きな方や、集合住宅で静かに暮らせるパートナーを探している方におすすめです。',
+                stats: { ease: 4, exercise: 2, affection: 5 },
+                weight: '約8〜14kg',
+                lifespan: '10〜13歳',
+                tags: ['compact', 'relaxed', 'cuddly', '無駄吠え少ない', '愛嬌', '鼻ぺちゃ']
+            },
+            {
+                id: 'collie',
+                name: 'ボーダー・コリー',
+                enName: 'Border Collie',
+                size: '中型犬',
+                origin: 'イギリス',
+                svgType: 'collie',
+                bgColor: 'bg-indigo-50',
+                catchphrase: '全犬種No.1の知性！スポーツ万能な最高のバディ',
+                shortDesc: '牧羊犬として活躍してきた抜群の運動神経と知能の持ち主。飼い主と協力して何かを成し遂げることが大好きです。',
+                personality: '非常に頭が良く、言葉やサインを驚くほど早く覚えます。仕事熱心でエネルギーに満ち溢れており、飼い主との深い信頼関係とコミュニケーションを求めます。',
+                care: '単なるお散歩だけでなく、フリスビーやアジリティなど頭と体を使う遊びが毎日必要です。被毛は週2〜3回のブラッシングで美しさを保てます。',
+                owner: 'ドッグスポーツに挑戦したい方や、毎日たっぷり運動とトレーニングの時間を取れるアクティブな方に最適です。',
+                stats: { ease: 3, exercise: 5, affection: 4 },
+                weight: '約14〜20kg',
+                lifespan: '12〜15歳',
+                tags: ['spacious', 'active', 'partner', '頭が良い', '運動神経抜群', '牧羊犬']
+            },
+            {
+                id: 'dachshund',
+                name: 'ミニチュア・ダックスフンド',
+                enName: 'Miniature Dachshund',
+                size: '小型犬',
+                origin: 'ドイツ',
+                svgType: 'dachshund',
+                bgColor: 'bg-amber-100/60',
+                catchphrase: '胴長短足の愛らしいフォルムと好奇心旺盛な冒険家',
+                shortDesc: '短い足でトコトコ歩く姿がたまらない人気犬種。明るく遊び好きで、家族とスキンシップをとることが大好きです。',
+                personality: '好奇心旺盛で陽気、そして少しお茶目な性格です。もともと穴熊猟で活躍していたため勇敢さもありますが、家庭ではとても甘えん坊で人懐っこく振る舞います。',
+                care: '胴が長い体型のため、腰（椎間板）への負担を減らすことが重要です。高いソファへの飛び乗りを防ぎ、適正体重をキープしましょう。',
+                owner: '明るく賑やかな家庭環境の方や、一緒に遊びながらスキンシップを楽しみたい方におすすめです。',
+                stats: { ease: 5, exercise: 3, affection: 5 },
+                weight: '約4.5〜5kg',
+                lifespan: '13〜16歳',
+                tags: ['compact', 'relaxed', 'cuddly', '遊び好き', '初心者向け', '短足']
+            },
+            {
+                id: 'pomeranian',
+                name: 'ポメラニアン',
+                enName: 'Pomeranian',
+                size: '小型犬',
+                origin: 'ドイツ',
+                svgType: 'pomeranian',
+                bgColor: 'bg-yellow-100/70',
+                catchphrase: 'ふわふわの綿毛のような被毛と華やかな笑顔',
+                shortDesc: '豊かなダブルコートの被毛とキツネのような愛らしい顔立ちが魅力。活発で好奇心いっぱいの小さなアイドルです。',
+                personality: '明るく活発で、いつもニコニコしているような愛嬌があります。飼い主に対してはとても甘えん坊で従順ですが、少し警戒心が強く番犬気質な一面も見せます。',
+                care: 'ふわふわの毛並みを維持するために、毎日の丁寧なブラッシングが大切です。骨が細いため、フローリングには滑り止めマットを敷くと安心です。',
+                owner: 'ブラッシングなどのお世話を楽しめる方や、お部屋の中で明るく華やかな存在を求める方にぴったりです。',
+                stats: { ease: 4, exercise: 3, affection: 5 },
+                weight: '約1.8〜3kg',
+                lifespan: '12〜16歳',
+                tags: ['compact', 'relaxed', 'cuddly', 'ふわふわ', '活発', '小型犬']
+            },
+            {
+                id: 'husky',
+                name: 'シベリアン・ハスキー',
+                enName: 'Siberian Husky',
+                size: '大型犬',
+                origin: 'ロシア（シベリア）',
+                svgType: 'husky',
+                bgColor: 'bg-sky-50',
+                catchphrase: 'クールな見た目とフレンドリーなギャップが魅力！',
+                shortDesc: 'オオカミのような精悍な顔立ちと美しい瞳を持ちながら、実はとっても陽気で人懐っこいギャップの持ち主です。',
+                personality: '見た目とは裏腹に警戒心が少なく、誰とでも仲良くなれるフレンドリーで楽天的な性格です。群れで暮らしてきた歴史から、他の犬や家族とも協調性を持って接します。',
+                care: '非常にタフな体力を持つため、毎日1〜2時間程度の運動が理想です。また、極寒の地出身なので夏場の温度管理と、換毛期の大量の抜け毛ケアが必要です。',
+                owner: '涼しい環境を整えられる広いお住まいの方や、長距離のウォーキング・ランニングを一緒に楽しみたい方におすすめです。',
+                stats: { ease: 3, exercise: 5, affection: 4 },
+                weight: '約16〜27kg',
+                lifespan: '12〜15歳',
+                tags: ['spacious', 'active', 'partner', 'フレンドリー', '美しい', '大型犬']
+            }
+        ];
+
+        /**
+         * アプリケーションの状態管理
+         */
+        let state = {
+            selectedSize: 'all',
+            searchQuery: '',
+            sortBy: 'default',
+            onlyFavorites: false,
+            favorites: JSON.parse(localStorage.getItem('wanko_favorites') || '[]'),
+            quizRecommendedIds: null, // null または推奨ID配列
+            currentModalBreedId: null
+        };
+
+        // DOM要素の取得
+        const breedGrid = document.getElementById('breedGrid');
+        const emptyState = document.getElementById('emptyState');
+        const resultCount = document.getElementById('resultCount');
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        const sortSelect = document.getElementById('sortSelect');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const favCountBadge = document.getElementById('favCountBadge');
+        const favFilterBtn = document.getElementById('favFilterBtn');
+        const headerHeartIcon = document.getElementById('headerHeartIcon');
+
+        /**
+         * 初期化処理
+         */
+        function init() {
+            updateFavoriteUI();
+            renderBreeds();
+            setupEventListeners();
+            lucide.createIcons();
+        }
+
+        /**
+         * イベントリスナーの設定
+         */
+        function setupEventListeners() {
+            // リアルタイムキーワード検索
+            searchInput.addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.trim();
+                clearSearchBtn.classList.toggle('hidden', state.searchQuery === '');
+                renderBreeds();
+            });
+
+            // サイズカテゴリーボタン
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.selectedSize = btn.dataset.size;
+                    updateSizeButtonsUI();
+                    renderBreeds();
+                });
+            });
+
+            // 並び替えセレクト
+            sortSelect.addEventListener('change', (e) => {
+                state.sortBy = e.target.value;
+                renderBreeds();
+            });
+
+            // Escキーでモーダルを閉じる
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeDetailModal();
+                    closeQuizModal();
+                }
+            });
+        }
+
+        /**
+         * サイズバッジのスタイル取得
+         */
+        function getSizeBadgeStyle(size) {
+            switch (size) {
+                case '小型犬':
+                    return 'bg-rose-100 text-rose-800 border border-rose-200';
+                case '中型犬':
+                    return 'bg-amber-100 text-amber-800 border border-amber-200';
+                case '大型犬':
+                    return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                default:
+                    return 'bg-stone-100 text-stone-800';
+            }
+        }
+
+        /**
+         * 星評価またはミニバー生成
+         */
+        function renderMiniStat(label, value, colorClass) {
+            const percentage = (value / 5) * 100;
+            return `
+                <div>
+                    <div class="flex justify-between text-[11px] font-bold text-stone-600 mb-1">
+                        <span>${label}</span>
+                        <span>${value}.0</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-stone-200/80 rounded-full overflow-hidden">
+                        <div class="h-full ${colorClass} rounded-full" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * 犬種カードのフィルタリング・ソート・描画
+         */
+        function renderBreeds() {
+            let filtered = DOG_BREEDS.filter(breed => {
+                // サイズフィルター
+                if (state.selectedSize !== 'all' && breed.size !== state.selectedSize) {
+                    return false;
+                }
+                // お気に入りフィルター
+                if (state.onlyFavorites && !state.favorites.includes(breed.id)) {
+                    return false;
+                }
+                // 診断結果フィルター
+                if (state.quizRecommendedIds && !state.quizRecommendedIds.includes(breed.id)) {
+                    return false;
+                }
+                // キーワード検索（名前・英語名・原産国・説明・タグ）
+                if (state.searchQuery !== '') {
+                    const q = state.searchQuery.toLowerCase();
+                    const searchableText = [
+                        breed.name,
+                        breed.enName,
+                        breed.origin,
+                        breed.size,
+                        breed.catchphrase,
+                        breed.shortDesc,
+                        breed.personality,
+                        ...breed.tags
+                    ].join(' ').toLowerCase();
+                    if (!searchableText.includes(q)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            // 並び替え処理
+            if (state.sortBy === 'ease') {
+                filtered.sort((a, b) => b.stats.ease - a.stats.ease);
+            } else if (state.sortBy === 'exercise') {
+                filtered.sort((a, b) => b.stats.exercise - a.stats.exercise);
+            } else if (state.sortBy === 'affection') {
+                filtered.sort((a, b) => b.stats.affection - a.stats.affection);
+            }
+
+            // 件数更新
+            resultCount.textContent = filtered.length;
+
+            // 0件の場合
+            if (filtered.length === 0) {
+                breedGrid.innerHTML = '';
+                breedGrid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                lucide.createIcons();
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            breedGrid.classList.remove('hidden');
+
+            // カードHTMLの生成
+            breedGrid.innerHTML = filtered.map(breed => {
+                const isFav = state.favorites.includes(breed.id);
+                const isRecommended = state.quizRecommendedIds && state.quizRecommendedIds.includes(breed.id);
+                
+                return `
+                    <article onclick="openDetailModal('${breed.id}')" class="card-hover cursor-pointer bg-white rounded-3xl overflow-hidden border ${isRecommended ? 'border-sage ring-2 ring-sage/30' : 'border-stone-200/80'} shadow-sm flex flex-col justify-between group relative">
+                        
+                        <!-- おすすめバッジ（診断時） -->
+                        ${isRecommended ? `
+                            <div class="absolute top-3 left-3 z-10 bg-sage text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                                <i data-lucide="sparkles" class="w-3 h-3"></i>
+                                おすすめ！
+                            </div>
+                        ` : ''}
+
+                        <!-- お気に入りボタン -->
+                        <button 
+                            onclick="event.stopPropagation(); toggleFavorite('${breed.id}', this)" 
+                            class="absolute top-3 right-3 z-10 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-sm flex items-center justify-center transition-transform hover:scale-110"
+                            aria-label="${breed.name}をお気に入りに追加"
+                            title="お気に入り登録"
+                        >
+                            <i data-lucide="heart" class="w-5 h-5 ${isFav ? 'fill-terracotta text-terracotta' : 'text-stone-400 hover:text-terracotta'} transition-colors"></i>
+                        </button>
+
+                        <div>
+                            <!-- イラストエリア -->
+                            <div class="${breed.bgColor} h-44 flex items-center justify-center relative overflow-hidden p-4 transition-colors">
+                                <div class="transform group-hover:scale-105 transition-transform duration-300">
+                                    ${getDogIllustrationSVG(breed.svgType)}
+                                </div>
+                            </div>
+
+                            <!-- テキストコンテンツ -->
+                            <div class="p-5 sm:p-6">
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${getSizeBadgeStyle(breed.size)}">
+                                        ${breed.size}
+                                    </span>
+                                    <span class="text-xs text-stone-400 font-medium flex items-center gap-1">
+                                        <i data-lucide="map-pin" class="w-3 h-3"></i>
+                                        原産: ${breed.origin}
+                                    </span>
+                                </div>
+
+                                <h3 class="font-maru font-black text-xl text-navy group-hover:text-terracotta transition-colors">
+                                    ${breed.name}
+                                </h3>
+                                <p class="text-[11px] font-semibold text-stone-400 tracking-wider uppercase mb-2.5">
+                                    ${breed.enName}
+                                </p>
+
+                                <p class="text-xs sm:text-sm text-stone-600 line-clamp-2 leading-relaxed mb-4">
+                                    ${breed.shortDesc}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- ステータスバー＆詳細リンク -->
+                        <div class="px-5 sm:px-6 pb-5 pt-3 border-t border-stone-100 bg-cream/40">
+                            <div class="grid grid-cols-3 gap-2.5 mb-3.5">
+                                ${renderMiniStat('飼いやすさ', breed.stats.ease, 'bg-terracotta')}
+                                ${renderMiniStat('運動量', breed.stats.exercise, 'bg-sage')}
+                                ${renderMiniStat('甘えん坊', breed.stats.affection, 'bg-amber-400')}
+                            </div>
+                            <div class="flex items-center justify-end text-xs font-bold text-terracotta group-hover:translate-x-1 transition-transform">
+                                <span>詳しく見る</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        /**
+         * お気に入り登録・解除処理
+         */
+        function toggleFavorite(id, btnElement = null) {
+            const index = state.favorites.indexOf(id);
+            if (index === -1) {
+                state.favorites.push(id);
+                if (btnElement) {
+                    const icon = btnElement.querySelector('svg');
+                    if (icon) icon.classList.add('heart-pop');
+                }
+            } else {
+                state.favorites.splice(index, 1);
+            }
+
+            localStorage.setItem('wanko_favorites', JSON.stringify(state.favorites));
+            updateFavoriteUI();
+            renderBreeds();
+
+            // モーダルが開いている場合はモーダル内ボタンも更新
+            if (state.currentModalBreedId === id) {
+                updateModalFavoriteBtn(id);
+            }
+        }
+
+        /**
+         * ヘッダーのお気に入りUI更新
+         */
+        function updateFavoriteUI() {
+            favCountBadge.textContent = state.favorites.length;
+            if (state.onlyFavorites) {
+                favFilterBtn.classList.remove('bg-warmBeige', 'text-navy');
+                favFilterBtn.classList.add('bg-terracotta', 'text-white', 'border-terracotta');
+                headerHeartIcon.classList.remove('text-terracotta');
+                headerHeartIcon.classList.add('text-white', 'fill-white');
+                favCountBadge.classList.remove('bg-terracotta', 'text-white');
+                favCountBadge.classList.add('bg-white', 'text-terracotta');
+            } else {
+                favFilterBtn.classList.add('bg-warmBeige', 'text-navy');
+                favFilterBtn.classList.remove('bg-terracotta', 'text-white', 'border-terracotta');
+                headerHeartIcon.classList.add('text-terracotta');
+                headerHeartIcon.classList.remove('text-white', 'fill-white');
+                favCountBadge.classList.add('bg-terracotta', 'text-white');
+                favCountBadge.classList.remove('bg-white', 'text-terracotta');
+            }
+        }
+
+        /**
+         * お気に入り表示モード切替
+         */
+        function toggleFavoriteFilter() {
+            state.onlyFavorites = !state.onlyFavorites;
+            updateFavoriteUI();
+            renderBreeds();
+        }
+
+        /**
+         * サイズボタンの見た目更新
+         */
+        function updateSizeButtonsUI() {
+            filterBtns.forEach(btn => {
+                if (btn.dataset.size === state.selectedSize) {
+                    btn.classList.remove('bg-warmBeige', 'text-navy', 'hover:bg-stone-200');
+                    btn.classList.add('bg-navy', 'text-white', 'shadow-sm');
+                } else {
+                    btn.classList.add('bg-warmBeige', 'text-navy', 'hover:bg-stone-200');
+                    btn.classList.remove('bg-navy', 'text-white', 'shadow-sm');
+                }
+            });
+        }
+
+        /**
+         * 検索クリア＆全リセット
+         */
+        function clearSearch() {
+            searchInput.value = '';
+            state.searchQuery = '';
+            clearSearchBtn.classList.add('hidden');
+            renderBreeds();
+        }
+
+        function resetAllFilters() {
+            state.selectedSize = 'all';
+            state.searchQuery = '';
+            state.sortBy = 'default';
+            state.onlyFavorites = false;
+            state.quizRecommendedIds = null;
+
+            searchInput.value = '';
+            clearSearchBtn.classList.add('hidden');
+            sortSelect.value = 'default';
+            document.getElementById('quizResultBanner').classList.add('hidden');
+
+            updateSizeButtonsUI();
+            updateFavoriteUI();
+            renderBreeds();
+        }
+
+        /**
+         * 詳細モーダルを開く
+         */
+        function openDetailModal(id) {
+            const breed = DOG_BREEDS.find(b => b.id === id);
+            if (!breed) return;
+
+            state.currentModalBreedId = id;
+
+            // ビジュアルと基本情報セット
+            const headerVisual = document.getElementById('modalHeaderVisual');
+            headerVisual.className = `relative h-52 sm:h-60 flex items-center justify-center overflow-hidden ${breed.bgColor}`;
+            headerVisual.innerHTML = `<div class="scale-110 sm:scale-125">${getDogIllustrationSVG(breed.svgType)}</div>`;
+
+            const sizeBadge = document.getElementById('modalSizeBadge');
+            sizeBadge.textContent = breed.size;
+            sizeBadge.className = `px-3 py-1 rounded-full text-xs font-bold ${getSizeBadgeStyle(breed.size)}`;
+
+            document.querySelector('#modalOrigin span').textContent = `原産国: ${breed.origin}`;
+            document.getElementById('modalBreedName').textContent = breed.name;
+            document.getElementById('modalBreedEn').textContent = breed.enName;
+            document.getElementById('modalCatchphrase').textContent = breed.catchphrase;
+
+            // ステータスバー更新
+            document.getElementById('modalStatEaseText').textContent = `${breed.stats.ease} / 5`;
+            document.getElementById('modalStatEaseBar').style.width = `${(breed.stats.ease / 5) * 100}%`;
+
+            document.getElementById('modalStatExerciseText').textContent = `${breed.stats.exercise} / 5`;
+            document.getElementById('modalStatExerciseBar').style.width = `${(breed.stats.exercise / 5) * 100}%`;
+
+            document.getElementById('modalStatAffectionText').textContent = `${breed.stats.affection} / 5`;
+            document.getElementById('modalStatAffectionBar').style.width = `${(breed.stats.affection / 5) * 100}%`;
+
+            // 詳細テキスト
+            document.getElementById('modalPersonality').textContent = breed.personality;
+            document.getElementById('modalCare').textContent = breed.care;
+            document.getElementById('modalOwner').textContent = breed.owner;
+            document.getElementById('modalWeight').textContent = `体重目安: ${breed.weight}`;
+            document.getElementById('modalLifespan').textContent = `平均寿命: ${breed.lifespan}`;
+
+            updateModalFavoriteBtn(id);
+
+            // モーダル表示アニメーション
+            const modal = document.getElementById('detailModal');
+            const backdrop = document.getElementById('detailModalBackdrop');
+            const content = document.getElementById('detailModalContent');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+
+            requestAnimationFrame(() => {
+                backdrop.classList.remove('opacity-0');
+                content.classList.remove('opacity-0', 'scale-95');
+                content.classList.add('opacity-100', 'scale-100');
+            });
+
+            lucide.createIcons();
+        }
+
+        function updateModalFavoriteBtn(id) {
+            const isFav = state.favorites.includes(id);
+            const btn = document.getElementById('modalFavBtn');
+            const text = document.getElementById('modalFavText');
+
+            if (isFav) {
+                btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm border-2 border-terracotta bg-terracotta text-white shadow-sm transition-all';
+                text.textContent = 'お気に入り済み';
+            } else {
+                btn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm border-2 border-stone-200 bg-white hover:border-terracotta text-navy transition-all';
+                text.textContent = 'お気に入りに追加';
+            }
+            // アイコン再描画
+            btn.innerHTML = `<i data-lucide="heart" class="w-4 h-4 ${isFav ? 'fill-white' : 'text-terracotta'}"></i><span>${text.textContent}</span>`;
+            lucide.createIcons();
+        }
+
+        function toggleCurrentModalFavorite() {
+            if (state.currentModalBreedId) {
+                toggleFavorite(state.currentModalBreedId);
+            }
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detailModal');
+            const backdrop = document.getElementById('detailModalBackdrop');
+            const content = document.getElementById('detailModalContent');
+
+            backdrop.classList.add('opacity-0');
+            content.classList.remove('opacity-100', 'scale-100');
+            content.classList.add('opacity-0', 'scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+                state.currentModalBreedId = null;
+            }, 250);
+        }
+
+        /**
+         * おすすめ犬種診断モーダル制御
+         */
+        function openQuizModal() {
+            const modal = document.getElementById('quizModal');
+            const backdrop = document.getElementById('quizModalBackdrop');
+            const content = document.getElementById('quizModalContent');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+
+            requestAnimationFrame(() => {
+                backdrop.classList.remove('opacity-0');
+                content.classList.remove('opacity-0', 'scale-95');
+                content.classList.add('opacity-100', 'scale-100');
+            });
+            lucide.createIcons();
+        }
+
+        function closeQuizModal() {
+            const modal = document.getElementById('quizModal');
+            const backdrop = document.getElementById('quizModalBackdrop');
+            const content = document.getElementById('quizModalContent');
+
+            backdrop.classList.add('opacity-0');
+            content.classList.remove('opacity-100', 'scale-100');
+            content.classList.add('opacity-0', 'scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }, 250);
+        }
+
+        /**
+         * 診断ロジック実行
+         */
+        function runBreedQuiz() {
+            const space = document.querySelector('input[name="q_space"]:checked').value;
+            const activity = document.querySelector('input[name="q_activity"]:checked').value;
+            const distance = document.querySelector('input[name="q_distance"]:checked').value;
+
+            // 各犬種に対して回答タグとのマッチ度スコアを計算
+            const scoredBreeds = DOG_BREEDS.map(breed => {
+                let score = 0;
+                if (breed.tags.includes(space)) score += 2;
+                if (breed.tags.includes(activity)) score += 2;
+                if (breed.tags.includes(distance)) score += 1;
+                return { id: breed.id, score };
+            });
+
+            // スコア上位の犬種（スコア3以上、最低3種）を抽出
+            scoredBreeds.sort((a, b) => b.score - a.score);
+            const recommended = scoredBreeds.filter(item => item.score >= 3).slice(0, 4).map(item => item.id);
+
+            // フィルター状態をリセットして診断結果を適用
+            state.selectedSize = 'all';
+            state.searchQuery = '';
+            state.onlyFavorites = false;
+            state.quizRecommendedIds = recommended;
+
+            searchInput.value = '';
+            clearSearchBtn.classList.add('hidden');
+            updateSizeButtonsUI();
+            updateFavoriteUI();
+
+            // 診断バナーの表示更新
+            const banner = document.getElementById('quizResultBanner');
+            const desc = document.getElementById('quizResultDesc');
+            const spaceLabel = space === 'compact' ? 'マンション・室内中心' : '広めのお部屋';
+            const actLabel = activity === 'relaxed' ? 'まったり派' : 'アウトドア派';
+            desc.textContent = `「${spaceLabel}」×「${actLabel}」のあなたにぴったりの ${recommended.length} 犬種をピックアップしました！`;
+            banner.classList.remove('hidden');
+
+            closeQuizModal();
+            renderBreeds();
+
+            // バナー位置へスムーズスクロール
+            banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function clearQuizFilter() {
+            state.quizRecommendedIds = null;
+            document.getElementById('quizResultBanner').classList.add('hidden');
+            renderBreeds();
+        }
+
+        // ページ読み込み時に初期化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
